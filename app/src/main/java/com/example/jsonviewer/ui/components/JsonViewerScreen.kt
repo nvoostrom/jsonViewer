@@ -11,15 +11,17 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
@@ -57,7 +59,10 @@ fun JsonViewerScreen(
     onLoadNewJson: () -> Unit,
     onToggleTheme: () -> Unit
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -139,21 +144,6 @@ fun JsonViewerScreen(
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
-        },
-        floatingActionButton = {
-            // Only show the floating button for structured view to Raw view toggle
-            if (!isViewingRawJson && items.isNotEmpty()) {
-                FloatingActionButton(
-                    onClick = { onToggleRawView() },
-                    containerColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Code,
-                        contentDescription = stringResource(R.string.view_raw_json),
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-            }
         }
     ) { paddingValues ->
         Box(

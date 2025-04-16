@@ -1,13 +1,25 @@
 package com.example.jsonviewer.ui.components.viewer
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -15,12 +27,19 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.example.jsonviewer.data.JsonNavigationItem
+import kotlinx.coroutines.launch
 
 /**
  * Preview component for Object type JSON values
  */
 @Composable
-fun ObjectPreview(item: JsonNavigationItem) {
+fun ObjectPreview(
+    item: JsonNavigationItem,
+    clipboardManager: ClipboardManager? = null,
+    snackbarHostState: SnackbarHostState? = null
+) {
+    val scope = rememberCoroutineScope()
+
     if (item.objectKeys.isNotEmpty()) {
         @Suppress("UNCHECKED_CAST")
         val objectMap = item.node as? Map<String, Any?>
@@ -41,6 +60,22 @@ fun ObjectPreview(item: JsonNavigationItem) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 4.dp)
+                            .clickable(enabled = clipboardManager != null) {
+                                clipboardManager?.let {
+                                    val textToCopy = when(value) {
+                                        is String -> "\"$value\""
+                                        null -> "null"
+                                        else -> value.toString()
+                                    }
+                                    it.setText(AnnotatedString(textToCopy))
+                                    snackbarHostState?.let { host ->
+                                        scope.launch {
+                                            host.showSnackbar("Value for '$key' copied to clipboard")
+                                        }
+                                    }
+                                }
+                            },
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = buildAnnotatedString {
@@ -64,8 +99,18 @@ fun ObjectPreview(item: JsonNavigationItem) {
                             },
                             style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
                         )
+
+                        if (clipboardManager != null && value !is Map<*, *> && value !is List<*>) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "Copy value",
+                                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
 

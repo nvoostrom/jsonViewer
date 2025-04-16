@@ -19,6 +19,7 @@
     <string name="json_content">JSON Content</string>
     <string name="clear">Clear</string>
     <string name="paste_clipboard">Paste from clipboard</string>
+    <string name="copy_to_clipboard">Copy to clipboard</string>
     <string name="format_json">Format JSON</string>
     <string name="invalid_json">Invalid JSON format</string>
     <string name="raw_json">Raw JSON</string>

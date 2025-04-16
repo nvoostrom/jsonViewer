@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -284,29 +285,11 @@ fun JsonItemEditor(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Action buttons
+                // Action buttons - IMPROVED LAYOUT
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Delete button (only shown when editing)
-                    if (!isAdding) {
-                        OutlinedButton(
-                            onClick = onDelete,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(R.string.delete))
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-
                     // Cancel button
                     TextButton(
                         onClick = onDismiss,
@@ -319,8 +302,6 @@ fun JsonItemEditor(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.cancel))
                     }
-
-                    Spacer(modifier = Modifier.width(8.dp))
 
                     // Save button
                     Button(
@@ -338,6 +319,22 @@ fun JsonItemEditor(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.save))
+                    }
+                }
+
+                // Delete button in its own row if not adding
+                if (!isAdding) {
+                    OutlinedButton(
+                        onClick = onDelete,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(stringResource(R.string.delete))
                     }
                 }
             }

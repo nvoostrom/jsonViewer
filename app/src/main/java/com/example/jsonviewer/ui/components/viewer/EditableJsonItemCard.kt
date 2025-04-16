@@ -11,25 +11,33 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.jsonviewer.R
 import com.example.jsonviewer.data.JsonNavigationItem
+import kotlinx.coroutines.launch
 
 /**
  * Enhanced JSON item card with editing capabilities
@@ -39,16 +47,21 @@ fun EditableJsonItemCard(
     item: JsonNavigationItem,
     parentIsArray: Boolean = false,
     onItemClick: (JsonNavigationItem) -> Unit,
-    onEditItem: (JsonNavigationItem) -> Unit
+    onEditItem: (JsonNavigationItem) -> Unit,
+    onDeleteItem: (JsonNavigationItem) -> Unit,
+    snackbarHostState: SnackbarHostState? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     val isClickable = item.isObject || item.isArray
+    val clipboardManager = LocalClipboardManager.current
+    val scope = rememberCoroutineScope()
 
     // Dialog states
     var showEditDialog by remember { mutableStateOf(false) }
+    var showObjectEditor by remember { mutableStateOf(false) }
 
-    // Show editor dialog when needed
-    if (showEditDialog) {
+    // Show standard editor dialog when needed
+    if (showEditDialog && !item.isObject) {
         JsonItemEditor(
             item = item,
             parentIsArray = parentIsArray,
@@ -61,7 +74,26 @@ fun EditableJsonItemCard(
             },
             onDelete = {
                 showEditDialog = false
-                // Deletion is handled in the parent component
+                // Call delete on the parent component
+                onDeleteItem(item)
+            }
+        )
+    }
+
+    // Show object field editor for objects
+    if (showObjectEditor && item.isObject) {
+        ObjectFieldEditor(
+            item = item,
+            onDismiss = { showObjectEditor = false },
+            onSave = { updatedObject ->
+                // Create a new item with the updated object
+                val updatedItem = item.copy(node = updatedObject)
+                onEditItem(updatedItem)
+                showObjectEditor = false
+            },
+            onDelete = {
+                showObjectEditor = false
+                onDeleteItem(item)
             }
         )
     }
@@ -100,9 +132,53 @@ fun EditableJsonItemCard(
                     modifier = Modifier.weight(1f)
                 )
 
+                // Copy button for primitive values
+                if (!item.isObject && !item.isArray) {
+                    IconButton(
+                        onClick = {
+                            val textToCopy = when (val value = item.node) {
+                                null -> "null"
+                                is String -> value
+                                else -> value.toString()
+                            }
+                            clipboardManager.setText(AnnotatedString(textToCopy))
+
+                            // Show snackbar if provided
+                            snackbarHostState?.let {
+                                scope.launch {
+                                    it.showSnackbar("Value copied to clipboard")
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = stringResource(R.string.copy_to_clipboard),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                // Delete button
+                IconButton(
+                    onClick = { onDeleteItem(item) }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.delete),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+
                 // Edit button
                 IconButton(
-                    onClick = { showEditDialog = true }
+                    onClick = {
+                        if (item.isObject) {
+                            showObjectEditor = true
+                        } else {
+                            showEditDialog = true
+                        }
+                    }
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
@@ -143,7 +219,7 @@ fun EditableJsonItemCard(
             // Content preview
             when {
                 item.isObject -> {
-                    ObjectPreview(item)
+                    ObjectPreview(item, clipboardManager, snackbarHostState)
                 }
                 item.isArray -> {
                     ArrayPreview(item)
