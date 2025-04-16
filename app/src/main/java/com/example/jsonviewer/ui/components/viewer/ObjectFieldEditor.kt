@@ -337,6 +337,7 @@ fun ObjectFieldInput(
 ) {
     val types = listOf("String", "Number", "Boolean", "Object", "Array", "null")
     var expanded by remember { mutableStateOf(false) }
+    var booleanExpanded by remember { mutableStateOf(false) }
 
     Card(
         shape = RoundedCornerShape(8.dp),
@@ -425,23 +426,60 @@ fun ObjectFieldInput(
 
             // Value field (not shown for null type)
             if (field.type != "null") {
-                val valueStr = when {
-                    field.value == null -> ""
-                    field.value is String -> field.value
-                    else -> field.value.toString()
-                }
+                // Special handling for Boolean type
+                if (field.type == "Boolean") {
+                    // Boolean dropdown selector
+                    ExposedDropdownMenuBox(
+                        expanded = booleanExpanded,
+                        onExpandedChange = { booleanExpanded = it },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = field.value?.toString() ?: "false",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Value") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = booleanExpanded) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                        )
 
-                OutlinedTextField(
-                    value = valueStr,
-                    onValueChange = {
-                        onFieldChange(field.copy(value = it))
-                    },
-                    label = { Text("Value") },
-                    modifier = Modifier.fillMaxWidth(),
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(
-                        fontFamily = FontFamily.Monospace
+                        ExposedDropdownMenu(
+                            expanded = booleanExpanded,
+                            onDismissRequest = { booleanExpanded = false }
+                        ) {
+                            listOf("true", "false").forEach { boolValue ->
+                                DropdownMenuItem(
+                                    text = { Text(boolValue) },
+                                    onClick = {
+                                        onFieldChange(field.copy(value = boolValue))
+                                        booleanExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // Regular text input for other types
+                    val valueStr = when {
+                        field.value == null -> ""
+                        field.value is String -> field.value
+                        else -> field.value.toString()
+                    }
+
+                    OutlinedTextField(
+                        value = valueStr,
+                        onValueChange = {
+                            onFieldChange(field.copy(value = it))
+                        },
+                        label = { Text("Value") },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = FontFamily.Monospace
+                        )
                     )
-                )
+                }
             }
         }
     }

@@ -21,12 +21,32 @@ import com.example.jsonviewer.ui.theme.ThemeState
 
 class MainActivity : ComponentActivity() {
     private val viewModel: JsonViewModel by viewModels()
+    private lateinit var storageService: LocalStorageService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Initialize storage service
+        storageService = (application as JsonViewerApplication).storageService
+
+        // Initialize theme from saved preference
+        storageService.loadThemePreference()
+        lifecycleScope.launch {
+            storageService.isDarkTheme.collect { isDark ->
+                ThemeState.initialize(isDark)
+            }
+        }
+
+        // Load recent and saved files
+        storageService.loadRecentFiles()
+        storageService.loadSavedJsons()
+
         setContent {
             val isDarkTheme = ThemeState.isDarkTheme
+
+            // Collect storage data
+            val recentFiles by storageService.recentFiles.collectAsState(initial = emptyList())
+            val savedJsons by storageService.savedJsons.collectAsState(initial = emptyList())
 
             JsonViewerTheme(darkTheme = isDarkTheme) {
                 Surface(
@@ -54,7 +74,27 @@ class MainActivity : ComponentActivity() {
                                 onFormatJson = { viewModel.formatCurrentJson() },
                                 onJsonLoaded = { viewModel.parseJsonString(it) },
                                 onToggleTheme = {
-                                    ThemeState.isDarkTheme = !ThemeState.isDarkTheme
+                                    ThemeState.setDarkTheme(!isDarkTheme, application)
+                                },
+                                // Add storage-related functionality
+                                onSaveJson = { name, content ->
+                                    storageService.saveJson(name, content)
+                                },
+                                recentFiles = recentFiles,
+                                savedJsons = savedJsons,
+                                onClearRecentFiles = {
+                                    storageService.clearRecentFiles()
+                                },
+                                onRecentFileSelected = { recentFile ->
+                                    viewModel.updateJsonText(recentFile.content)
+                                    viewModel.parseJsonString(recentFile.content)
+                                },
+                                onSavedJsonSelected = { savedJson ->
+                                    viewModel.updateJsonText(savedJson.content)
+                                    viewModel.parseJsonString(savedJson.content)
+                                },
+                                onDeleteSavedJson = { id ->
+                                    storageService.deleteJson(id)
                                 }
                             )
                         }
@@ -120,7 +160,11 @@ class MainActivity : ComponentActivity() {
                                     viewModel.resetToInitial()
                                 },
                                 onToggleTheme = {
-                                    ThemeState.isDarkTheme = !ThemeState.isDarkTheme
+                                    ThemeState.setDarkTheme(!isDarkTheme, application)
+                                },
+                                // Add save functionality for the JsonViewer screen
+                                onSaveJson = { name ->
+                                    storageService.saveJson(name, rawJson)
                                 }
                             )
                         }

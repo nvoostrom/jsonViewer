@@ -14,6 +14,9 @@ import com.example.jsonviewer.R
 /**
  * Theme toggle button component
  */
+/**
+ * Theme toggle button component with improved styling
+ */
 @Composable
 fun ThemeSwitcher(
     isDarkTheme: Boolean,
@@ -24,10 +27,24 @@ fun ThemeSwitcher(
         onClick = onToggleTheme,
         modifier = modifier
     ) {
+        // Animation for smooth transition between icons
+        val transition = updateTransition(
+            targetState = isDarkTheme,
+            label = "ThemeIconTransition"
+        )
+
+        val animatedTint by transition.animateColor(
+            label = "ThemeIconColor",
+            transitionSpec = { tween(durationMillis = 300) }
+        ) { dark ->
+            if (dark) MaterialTheme.colorScheme.inverseOnSurface
+            else MaterialTheme.colorScheme.onPrimaryContainer
+        }
+
         Icon(
             imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
             contentDescription = stringResource(if (isDarkTheme) R.string.light_mode else R.string.dark_mode),
-            tint = MaterialTheme.colorScheme.onPrimaryContainer
+            tint = animatedTint
         )
     }
 }

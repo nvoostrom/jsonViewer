@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,6 +31,7 @@ fun JsonInputActions(
     jsonText: String,
     isJsonValid: Boolean,
     onJsonLoaded: (String) -> Unit,
+    onSaveJson: () -> Unit = {},
     onError: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -77,6 +80,23 @@ fun JsonInputActions(
                         modifier = Modifier.padding(end = 8.dp)
                     )
                     Text(stringResource(R.string.parse_json))
+                }
+            }
+
+            // Save button (if we have valid JSON)
+            if (jsonText.isNotEmpty() && isJsonValid) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                FilledTonalButton(
+                    onClick = onSaveJson,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Save,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(stringResource(R.string.save_json))
                 }
             }
         }
