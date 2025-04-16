@@ -43,4 +43,12 @@
     <string name="value_type">Value Type</string>
     <string name="add_json_item">Add JSON Item</string>
     <string name="edit_json_item">Edit JSON Item</string>
+    <string name="save_json">Save JSON</string>
+    <string name="file_name">File Name</string>
+    <string name="file_name_required">File name is required</string>
+    <string name="recent_files">Recent Files</string>
+    <string name="clear_history">Clear History</string>
+    <string name="no_recent_files">No recent files</string>
+    <string name="saved_json_files">Saved JSON Files</string>
+    <string name="no_saved_files">No saved files</string>
 </resources>
