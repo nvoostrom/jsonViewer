@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -21,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
@@ -29,6 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.example.jsonviewer.R
 import com.example.jsonviewer.data.JsonNavigationItem
 import com.example.jsonviewer.ui.components.common.ThemeSwitcher
+import com.example.jsonviewer.ui.components.dialogs.SaveJsonDialog
 import com.example.jsonviewer.ui.components.navigation.NavigationBreadcrumb
 import com.example.jsonviewer.ui.components.raw.EditableRawJsonView
 import com.example.jsonviewer.ui.components.state.EmptyStateView
@@ -57,9 +60,25 @@ fun JsonViewerScreen(
     onAddItem: (String, Any?) -> Unit = { _, _ -> },
     onDeleteItem: (JsonNavigationItem) -> Unit = {},
     onLoadNewJson: () -> Unit,
-    onToggleTheme: () -> Unit
+    onToggleTheme: () -> Unit,
+    onSaveJson: (String) -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Dialog state
+    var showSaveDialog by remember { mutableStateOf(false) }
+
+    // Show save dialog when needed
+    if (showSaveDialog) {
+        SaveJsonDialog(
+            initialName = "",
+            onDismiss = { showSaveDialog = false },
+            onSave = { name ->
+                onSaveJson(name)
+                showSaveDialog = false
+            }
+        )
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -83,6 +102,14 @@ fun JsonViewerScreen(
                     }
                 },
                 actions = {
+                    // Save button
+                    IconButton(onClick = { showSaveDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Save,
+                            contentDescription = stringResource(R.string.save_json)
+                        )
+                    }
+
                     // Raw JSON actions
                     if (isViewingRawJson) {
                         // Edit/Save toggle for raw JSON
@@ -145,7 +172,7 @@ fun JsonViewerScreen(
                 )
             )
         }
-    ) { paddingValues ->
+    ){ paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
