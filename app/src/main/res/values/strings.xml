@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">JSON Viewer</string>
+    <string name="parse_json">Parse JSON</string>
+    <string name="upload_json">Upload JSON File</string>
+    <string name="load_sample">Load Sample</string>
+    <string name="enter_json">Enter JSON</string>
+    <string name="loading">Loading...</string>
+    <string name="no_data">No Data</string>
+    <string name="no_items">There are no items to display.</string>
+    <string name="error">Error</string>
+    <string name="parsing_error">Failed to parse the JSON data.</string>
+    <string name="retry">Retry</string>
+    <string name="back">Back</string>
+    <string name="navigate">Navigate</string>
+</resources>
