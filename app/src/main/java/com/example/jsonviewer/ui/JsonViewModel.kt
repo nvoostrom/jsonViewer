@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jsonviewer.data.JsonNavigationItem
 import com.example.jsonviewer.data.JsonParser
+import com.example.jsonviewer.utils.JsonUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +24,18 @@ sealed class JsonViewState {
 class JsonViewModel : ViewModel() {
     private val jsonParser = JsonParser()
 
+    // Raw JSON string
+    private val _rawJsonString = MutableStateFlow<String>("")
+    val rawJsonString: StateFlow<String> = _rawJsonString.asStateFlow()
+
+    // Formatted JSON for display
+    private val _formattedJsonString = MutableStateFlow<String>("")
+    val formattedJsonString: StateFlow<String> = _formattedJsonString.asStateFlow()
+
+    // Is raw JSON prettified
+    private val _isPrettified = MutableStateFlow(true)
+    val isPrettified: StateFlow<Boolean> = _isPrettified.asStateFlow()
+
     private val _jsonData = MutableStateFlow<Map<String, Any?>>(emptyMap())
     val jsonData: StateFlow<Map<String, Any?>> = _jsonData.asStateFlow()
 
@@ -36,11 +49,43 @@ class JsonViewModel : ViewModel() {
     private val _viewState = MutableStateFlow<JsonViewState>(JsonViewState.Initial)
     val viewState: StateFlow<JsonViewState> = _viewState.asStateFlow()
 
+    // Is viewing raw JSON
+    private val _isViewingRawJson = MutableStateFlow(false)
+    val isViewingRawJson: StateFlow<Boolean> = _isViewingRawJson.asStateFlow()
+
+    /**
+     * Toggle raw JSON view
+     */
+    fun toggleRawJsonView() {
+        _isViewingRawJson.value = !_isViewingRawJson.value
+    }
+
+    /**
+     * Toggle between prettified and minified JSON
+     */
+    fun toggleJsonFormat() {
+        _isPrettified.value = !_isPrettified.value
+        updateFormattedJson()
+    }
+
+    /**
+     * Update the formatted JSON based on current preferences
+     */
+    private fun updateFormattedJson() {
+        if (_isPrettified.value) {
+            _formattedJsonString.value = JsonUtils.prettifyJson(_rawJsonString.value)
+        } else {
+            _formattedJsonString.value = JsonUtils.minifyJson(_rawJsonString.value)
+        }
+    }
+
     /**
      * Reset to the initial state
      */
     fun resetToInitial() {
         _viewState.value = JsonViewState.Initial
+        _isViewingRawJson.value = false
+        _rawJsonString.value = ""
     }
 
     /**
@@ -52,12 +97,14 @@ class JsonViewModel : ViewModel() {
 
             try {
                 // Add a small delay to show loading state (optional)
-                delay(500)
+                delay(300)
 
                 val parsedJson = jsonParser.parseJson(jsonString)
                 _jsonData.value = parsedJson
                 _navigationPath.value = emptyList()
                 _currentItems.value = jsonParser.getObjectEntries(parsedJson)
+                _rawJsonString.value = jsonString
+                updateFormattedJson()
                 _viewState.value = JsonViewState.Success
             } catch (e: Exception) {
                 // Handle parsing errors
@@ -65,6 +112,7 @@ class JsonViewModel : ViewModel() {
                 _jsonData.value = emptyMap()
                 _navigationPath.value = emptyList()
                 _currentItems.value = emptyList()
+                _rawJsonString.value = jsonString // Keep original input for reference
             }
         }
     }
@@ -98,6 +146,12 @@ class JsonViewModel : ViewModel() {
      * Navigate back to the previous level
      */
     fun navigateBack(): Boolean {
+        // If viewing raw JSON, go back to normal view
+        if (_isViewingRawJson.value) {
+            _isViewingRawJson.value = false
+            return true
+        }
+
         if (_navigationPath.value.isEmpty()) {
             return false
         }
@@ -140,5 +194,6 @@ class JsonViewModel : ViewModel() {
     fun resetToRoot() {
         _navigationPath.value = emptyList()
         _currentItems.value = jsonParser.getObjectEntries(_jsonData.value)
+        _isViewingRawJson.value = false
     }
 }

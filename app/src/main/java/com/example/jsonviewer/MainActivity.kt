@@ -4,21 +4,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import com.example.jsonviewer.ui.ErrorView
-import com.example.jsonviewer.ui.JsonInputScreen
 import com.example.jsonviewer.ui.JsonViewModel
 import com.example.jsonviewer.ui.JsonViewState
-import com.example.jsonviewer.ui.JsonViewerScreen
-import com.example.jsonviewer.ui.LoadingView
-import com.example.jsonviewer.ui.NavigationBreadcrumb
+import com.example.jsonviewer.ui.components.state.ErrorView
+import com.example.jsonviewer.ui.components.state.LoadingView
+import com.example.jsonviewer.ui.components.input.JsonInputScreen
+import com.example.jsonviewer.ui.components.JsonViewerScreen
 import com.example.jsonviewer.ui.theme.JsonViewerTheme
 
 class MainActivity : ComponentActivity() {
@@ -36,6 +33,9 @@ class MainActivity : ComponentActivity() {
                     val viewState by viewModel.viewState.collectAsState()
                     val items by viewModel.currentItems.collectAsState()
                     val path by viewModel.navigationPath.collectAsState()
+                    val rawJson by viewModel.formattedJsonString.collectAsState()
+                    val isViewingRawJson by viewModel.isViewingRawJson.collectAsState()
+                    val isPrettified by viewModel.isPrettified.collectAsState()
 
                     when (viewState) {
                         is JsonViewState.Initial -> {
@@ -62,37 +62,34 @@ class MainActivity : ComponentActivity() {
 
                         is JsonViewState.Success -> {
                             // Show JSON viewer once JSON is loaded successfully
-                            Column {
-                                NavigationBreadcrumb(
-                                    path = path,
-                                    onNavigateTo = { index ->
-                                        if (index == -1) {
-                                            viewModel.resetToRoot()
-                                        } else {
-                                            // Navigate to specific path segment
-                                            // In a more complete implementation, we'd handle
-                                            // navigating to specific segments in the path
-                                        }
+                            JsonViewerScreen(
+                                items = items,
+                                path = path,
+                                rawJson = rawJson,
+                                isViewingRawJson = isViewingRawJson,
+                                isPrettified = isPrettified,
+                                onNavigateBack = {
+                                    val result = viewModel.navigateBack()
+                                    // If we're at the root and trying to go back,
+                                    // allow loading a new JSON
+                                    if (!result && path.isEmpty() && !isViewingRawJson) {
+                                        viewModel.resetToInitial()
                                     }
-                                )
-
-                                JsonViewerScreen(
-                                    items = items,
-                                    path = path,
-                                    onNavigateBack = {
-                                        val result = viewModel.navigateBack()
-                                        // If we're at the root and trying to go back,
-                                        // allow loading a new JSON
-                                        if (!result && path.isEmpty()) {
-                                            viewModel.resetToInitial()
-                                        }
-                                        result
-                                    },
-                                    onItemClick = { item ->
-                                        viewModel.navigateTo(item.key, item.node)
-                                    }
-                                )
-                            }
+                                    result
+                                },
+                                onItemClick = { item ->
+                                    viewModel.navigateTo(item.key, item.node)
+                                },
+                                onToggleRawView = {
+                                    viewModel.toggleRawJsonView()
+                                },
+                                onToggleJsonFormat = {
+                                    viewModel.toggleJsonFormat()
+                                },
+                                onLoadNewJson = {
+                                    viewModel.resetToInitial()
+                                }
+                            )
                         }
                     }
                 }
