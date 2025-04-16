@@ -68,11 +68,44 @@ class JsonParser {
      */
     fun getObjectEntries(jsonMap: Map<String, Any?>): List<JsonNavigationItem> {
         return jsonMap.map { (key, value) ->
+            val isObject = value is Map<*, *>
+            val isArray = value is List<*>
+
+            // Enhanced metadata for display
+            val objectKeys = if (isObject) {
+                @Suppress("UNCHECKED_CAST")
+                (value as Map<String, Any?>).keys.toList()
+            } else {
+                emptyList()
+            }
+
+            val arraySize = if (isArray) {
+                @Suppress("UNCHECKED_CAST")
+                (value as List<*>).size
+            } else {
+                0
+            }
+
+            val arrayItemType = if (isArray && (value as List<*>).isNotEmpty()) {
+                val firstItem = (value as List<*>)[0]
+                when {
+                    firstItem is Map<*, *> -> "Object"
+                    firstItem is List<*> -> "Array"
+                    firstItem == null -> "null"
+                    else -> firstItem::class.java.simpleName
+                }
+            } else {
+                ""
+            }
+
             JsonNavigationItem(
                 key = key,
                 node = value,
-                isArray = value is List<*>,
-                isObject = value is Map<*, *>
+                isArray = isArray,
+                isObject = isObject,
+                objectKeys = objectKeys,
+                arraySize = arraySize,
+                arrayItemType = arrayItemType
             )
         }
     }
@@ -82,11 +115,44 @@ class JsonParser {
      */
     fun getArrayEntries(jsonArray: List<Any?>): List<JsonNavigationItem> {
         return jsonArray.mapIndexed { index, value ->
+            val isObject = value is Map<*, *>
+            val isArray = value is List<*>
+
+            // Enhanced metadata for display
+            val objectKeys = if (isObject) {
+                @Suppress("UNCHECKED_CAST")
+                (value as Map<String, Any?>).keys.toList()
+            } else {
+                emptyList()
+            }
+
+            val arraySize = if (isArray) {
+                @Suppress("UNCHECKED_CAST")
+                (value as List<*>).size
+            } else {
+                0
+            }
+
+            val arrayItemType = if (isArray && (value as List<*>).isNotEmpty()) {
+                val firstItem = (value as List<*>)[0]
+                when {
+                    firstItem is Map<*, *> -> "Object"
+                    firstItem is List<*> -> "Array"
+                    firstItem == null -> "null"
+                    else -> firstItem::class.java.simpleName
+                }
+            } else {
+                ""
+            }
+
             JsonNavigationItem(
                 key = index.toString(),
                 node = value,
-                isArray = value is List<*>,
-                isObject = value is Map<*, *>
+                isArray = isArray,
+                isObject = isObject,
+                objectKeys = objectKeys,
+                arraySize = arraySize,
+                arrayItemType = arrayItemType
             )
         }
     }

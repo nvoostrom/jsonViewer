@@ -41,5 +41,8 @@ data class JsonNavigationItem(
     val key: String,
     val node: Any?,
     val isArray: Boolean = false,
-    val isObject: Boolean = false
+    val isObject: Boolean = false,
+    val objectKeys: List<String> = emptyList(),
+    val arraySize: Int = 0,
+    val arrayItemType: String = ""
 )

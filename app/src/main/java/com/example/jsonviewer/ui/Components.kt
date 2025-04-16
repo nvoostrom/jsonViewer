@@ -143,30 +143,112 @@ fun JsonItemCard(
             Divider()
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Show a preview of the value if it's a primitive
-            if (!item.isObject && !item.isArray && item.node != null) {
-                Text(
-                    text = item.node.toString(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 5,
-                    overflow = TextOverflow.Ellipsis
-                )
-            } else {
-                Text(
-                    text = if (item.isArray) "Array" else "Object",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.secondary
-                )
+            // Show content preview based on the type
+            when {
+                item.isObject -> {
+                    // For objects, show each property on its own line with its value
+                    if (item.objectKeys.isNotEmpty()) {
+                        @Suppress("UNCHECKED_CAST")
+                        val objectMap = item.node as? Map<String, Any?>
+
+                        if (objectMap != null) {
+                            // Create a column of key-value pairs
+                            Column(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                objectMap.entries.take(5).forEach { (key, value) ->
+                                    val valueStr = when (value) {
+                                        is Map<*, *> -> "..."
+                                        is List<*> -> "..."
+                                        null -> "Empty"
+                                        else -> value.toString()
+                                    }
+
+                                    Text(
+                                        text = "$key: $valueStr",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+
+                                if (objectMap.size > 5) {
+                                    Text(
+                                        text = "...",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.outline
+                                    )
+                                }
+                            }
+                        } else {
+                            // Fallback if for some reason we can't get the values
+                            val keyPreview = item.objectKeys.take(5).joinToString(", ")
+                            Text(
+                                text = "Contains: $keyPreview${if (item.objectKeys.size > 5) "..." else ""}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "Empty",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                }
+                item.isArray -> {
+                    // For arrays, show a user-friendly description of contained items
+                    val contentPreview = if (item.arraySize > 0) {
+                        val firstItem = (item.node as? List<*>)?.firstOrNull()
+
+                        if (firstItem is Map<*, *>) {
+                            val propertyPreview = (firstItem as Map<String, Any?>).keys.take(5).joinToString(", ")
+                            "Contains ${item.arraySize} items with: $propertyPreview${if ((firstItem as Map<String, Any?>).size > 5) "..." else ""}"
+                        } else {
+                            "Contains ${item.arraySize} items"
+                        }
+                    } else {
+                        "Empty list"
+                    }
+
+                    Text(
+                        text = contentPreview,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                item.node == null -> {
+                    Text(
+                        text = "null",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                else -> {
+                    // For primitive values
+                    Text(
+                        text = item.node.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 5,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Show type indicator
+            // Show type indicator with more user-friendly terms
             Text(
                 text = when {
-                    item.isObject -> "Object"
-                    item.isArray -> "Array"
-                    item.node == null -> "null"
+                    item.isObject -> "Group"
+                    item.isArray -> "List"
+                    item.node == null -> "Empty"
+                    item.node is String -> "Text"
+                    item.node is Number -> "Number"
+                    item.node is Boolean -> "Yes/No"
                     else -> item.node::class.java.simpleName
                 },
                 style = MaterialTheme.typography.bodySmall,
