@@ -33,7 +33,7 @@ object JsonStorageUtils {
     }
 
     // Parse JSON string to RecentFile list
-    fun fromJsonList(json: String): List<RecentFile> {
+    fun fromRecentFileJsonList(json: String): List<RecentFile> {
         return try {
             recentFileAdapter.fromJson(json) ?: emptyList()
         } catch (e: Exception) {
@@ -47,7 +47,7 @@ object JsonStorageUtils {
     }
 
     // Parse JSON string to SavedJson list
-    fun fromJsonList(json: String): List<SavedJson> {
+    fun fromSavedJsonList(json: String): List<SavedJson> {
         return try {
             savedJsonAdapter.fromJson(json) ?: emptyList()
         } catch (e: Exception) {

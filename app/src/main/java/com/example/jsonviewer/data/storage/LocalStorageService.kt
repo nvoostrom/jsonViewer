@@ -60,7 +60,7 @@ class LocalStorageService(context: Context) {
 
     fun loadRecentFiles() {
         val recentFilesJson = sharedPreferences.getString(KEY_RECENT_FILES, "[]") ?: "[]"
-        _recentFiles.value = JsonStorageUtils.fromJsonList(recentFilesJson)
+        _recentFiles.value = JsonStorageUtils.fromRecentFileJsonList(recentFilesJson)
     }
 
     fun addRecentFile(name: String, content: String) {
@@ -96,7 +96,7 @@ class LocalStorageService(context: Context) {
 
     fun loadSavedJsons() {
         val savedJsonsJson = sharedPreferences.getString(KEY_SAVED_JSONS, "[]") ?: "[]"
-        _savedJsons.value = JsonStorageUtils.fromJsonList(savedJsonsJson)
+        _savedJsons.value = JsonStorageUtils.fromSavedJsonList(savedJsonsJson)
     }
 
     fun saveJson(name: String, content: String, id: String = UUID.randomUUID().toString()): String {

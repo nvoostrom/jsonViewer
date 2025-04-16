@@ -10,6 +10,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
+import com.example.jsonviewer.data.storage.LocalStorageService
+import kotlinx.coroutines.launch
 import com.example.jsonviewer.ui.JsonViewModel
 import com.example.jsonviewer.ui.JsonViewState
 import com.example.jsonviewer.ui.components.state.ErrorView
@@ -76,12 +79,12 @@ class MainActivity : ComponentActivity() {
                                 onToggleTheme = {
                                     ThemeState.setDarkTheme(!isDarkTheme, application)
                                 },
-                                // Add storage-related functionality
-                                onSaveJson = { name, content ->
-                                    storageService.saveJson(name, content)
+                                // These were causing the unresolved reference errors
+                                onSaveJson = { name ->
+                                    storageService.saveJson(name, currentJsonText)
                                 },
-                                recentFiles = recentFiles,
-                                savedJsons = savedJsons,
+                                recentFiles = recentFiles.value,
+                                savedJsons = savedJsons.value,
                                 onClearRecentFiles = {
                                     storageService.clearRecentFiles()
                                 },
