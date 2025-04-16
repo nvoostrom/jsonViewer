@@ -1,7 +1,7 @@
 package com.example.jsonviewer.data
 
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+//import com.squareup.moshi.Moshi
+//import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -9,9 +9,9 @@ import org.json.JSONObject
  * Utility class for parsing and navigating JSON data
  */
 class JsonParser {
-    private val moshi = Moshi.Builder()
-        .addLast(KotlinJsonAdapterFactory())
-        .build()
+//    private val moshi = Moshi.Builder()
+//        .addLast(KotlinJsonAdapterFactory())
+//        .build()
 
     /**
      * Parse a JSON string into a dynamic structure
@@ -80,18 +80,16 @@ class JsonParser {
             }
 
             val arraySize = if (isArray) {
-                @Suppress("UNCHECKED_CAST")
                 (value as List<*>).size
             } else {
                 0
             }
 
             val arrayItemType = if (isArray && (value as List<*>).isNotEmpty()) {
-                val firstItem = (value as List<*>)[0]
-                when {
-                    firstItem is Map<*, *> -> "Object"
-                    firstItem is List<*> -> "Array"
-                    firstItem == null -> "null"
+                when (val firstItem = (value)[0]) {
+                    is Map<*, *> -> "Object"
+                    is List<*> -> "Array"
+                    null -> "null"
                     else -> firstItem::class.java.simpleName
                 }
             } else {
@@ -127,18 +125,16 @@ class JsonParser {
             }
 
             val arraySize = if (isArray) {
-                @Suppress("UNCHECKED_CAST")
                 (value as List<*>).size
             } else {
                 0
             }
 
             val arrayItemType = if (isArray && (value as List<*>).isNotEmpty()) {
-                val firstItem = (value as List<*>)[0]
-                when {
-                    firstItem is Map<*, *> -> "Object"
-                    firstItem is List<*> -> "Array"
-                    firstItem == null -> "null"
+                when (val firstItem = (value)[0]) {
+                    is Map<*, *> -> "Object"
+                    is List<*> -> "Array"
+                    null -> "null"
                     else -> firstItem::class.java.simpleName
                 }
             } else {

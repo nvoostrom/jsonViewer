@@ -106,8 +106,8 @@ fun ArrayPreview(item: JsonNavigationItem) {
         val firstItem = (item.node as? List<*>)?.firstOrNull()
 
         if (firstItem is Map<*, *>) {
-            val propertyPreview = (firstItem as Map<String, Any?>).keys.take(3).joinToString(", ")
-            "Contains ${item.arraySize} object(s) with fields: $propertyPreview${if ((firstItem as Map<String, Any?>).size > 3) "..." else ""}"
+            val propertyPreview = (firstItem).keys.take(3).joinToString(", ")
+            "Contains ${item.arraySize} object(s) with fields: $propertyPreview${if ((firstItem).size > 3) "..." else ""}"
         } else {
             "Contains ${item.arraySize} item(s)"
         }
@@ -130,9 +130,9 @@ fun ArrayPreview(item: JsonNavigationItem) {
 @Composable
 fun PrimitiveValuePreview(item: JsonNavigationItem, expanded: Boolean) {
     val maxLength = 100
-    val text = when {
-        item.node == null -> "null"
-        item.node is String -> "\"${item.node}\""
+    val text = when (item.node) {
+        null -> "null"
+        is String -> "\"${item.node}\""
         else -> item.node.toString()
     }
 
@@ -144,11 +144,11 @@ fun PrimitiveValuePreview(item: JsonNavigationItem, expanded: Boolean) {
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontFamily = FontFamily.Monospace
             ),
-            color = when {
-                item.node == null -> MaterialTheme.colorScheme.outline
-                item.node is String -> MaterialTheme.colorScheme.secondary
-                item.node is Number -> MaterialTheme.colorScheme.error
-                item.node is Boolean -> MaterialTheme.colorScheme.onSurface
+            color = when (item.node) {
+                null -> MaterialTheme.colorScheme.outline
+                is String -> MaterialTheme.colorScheme.secondary
+                is Number -> MaterialTheme.colorScheme.error
+                is Boolean -> MaterialTheme.colorScheme.onSurface
                 else -> MaterialTheme.colorScheme.onSurface
             },
             maxLines = if (expanded) Int.MAX_VALUE else 3,

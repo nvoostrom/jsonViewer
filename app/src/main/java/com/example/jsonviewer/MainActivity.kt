@@ -17,6 +17,7 @@ import com.example.jsonviewer.ui.components.state.LoadingView
 import com.example.jsonviewer.ui.components.input.JsonInputScreen
 import com.example.jsonviewer.ui.components.JsonViewerScreen
 import com.example.jsonviewer.ui.theme.JsonViewerTheme
+import com.example.jsonviewer.ui.theme.ThemeState
 
 class MainActivity : ComponentActivity() {
     private val viewModel: JsonViewModel by viewModels()
@@ -25,7 +26,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            JsonViewerTheme {
+            val isDarkTheme = ThemeState.isDarkTheme
+
+            JsonViewerTheme(darkTheme = isDarkTheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -35,18 +38,29 @@ class MainActivity : ComponentActivity() {
                     val path by viewModel.navigationPath.collectAsState()
                     val rawJson by viewModel.formattedJsonString.collectAsState()
                     val isViewingRawJson by viewModel.isViewingRawJson.collectAsState()
+                    val isEditingRawJson by viewModel.isEditingRawJson.collectAsState()
                     val isPrettified by viewModel.isPrettified.collectAsState()
+                    val currentJsonText by viewModel.currentJsonText.collectAsState()
+                    val isJsonValid by viewModel.isJsonValid.collectAsState()
+                    val isCurrentArrayParent by viewModel.isCurrentArrayParent.collectAsState()
 
                     when (viewState) {
                         is JsonViewState.Initial -> {
                             // Show JSON input screen initially
-                            JsonInputScreen(onJsonLoaded = { jsonString ->
-                                viewModel.parseJsonString(jsonString)
-                            })
+                            JsonInputScreen(
+                                jsonText = currentJsonText,
+                                isJsonValid = isJsonValid,
+                                onJsonTextChanged = { viewModel.updateJsonText(it) },
+                                onFormatJson = { viewModel.formatCurrentJson() },
+                                onJsonLoaded = { viewModel.parseJsonString(it) },
+                                onToggleTheme = {
+                                    ThemeState.isDarkTheme = !ThemeState.isDarkTheme
+                                }
+                            )
                         }
 
                         is JsonViewState.Loading -> {
-                            LoadingView(message = "Parsing JSON...")
+                            LoadingView(message = getString(R.string.parsing_json))
                         }
 
                         is JsonViewState.Error -> {
@@ -54,7 +68,6 @@ class MainActivity : ComponentActivity() {
                             ErrorView(
                                 message = errorMessage,
                                 onRetry = {
-                                    // Reset to initial state to allow user to try again
                                     viewModel.resetToInitial()
                                 }
                             )
@@ -68,6 +81,8 @@ class MainActivity : ComponentActivity() {
                                 rawJson = rawJson,
                                 isViewingRawJson = isViewingRawJson,
                                 isPrettified = isPrettified,
+                                isEditingRawJson = isEditingRawJson,
+                                isCurrentArrayParent = isCurrentArrayParent,
                                 onNavigateBack = {
                                     val result = viewModel.navigateBack()
                                     // If we're at the root and trying to go back,
@@ -86,8 +101,26 @@ class MainActivity : ComponentActivity() {
                                 onToggleJsonFormat = {
                                     viewModel.toggleJsonFormat()
                                 },
+                                onToggleRawEditing = {
+                                    viewModel.toggleRawJsonEditing()
+                                },
+                                onSaveRawJsonChanges = { editedJson ->
+                                    viewModel.saveRawJsonChanges(editedJson)
+                                },
+                                onEditItem = { item, key, value ->
+                                    viewModel.editJsonItem(item, key, value)
+                                },
+                                onAddItem = { key, value ->
+                                    viewModel.addJsonItem(key, value)
+                                },
+                                onDeleteItem = { item ->
+                                    viewModel.deleteJsonItem(item)
+                                },
                                 onLoadNewJson = {
                                     viewModel.resetToInitial()
+                                },
+                                onToggleTheme = {
+                                    ThemeState.isDarkTheme = !ThemeState.isDarkTheme
                                 }
                             )
                         }

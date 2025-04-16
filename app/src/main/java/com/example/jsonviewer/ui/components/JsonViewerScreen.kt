@@ -5,10 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -21,15 +21,19 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.jsonviewer.R
 import com.example.jsonviewer.data.JsonNavigationItem
+import com.example.jsonviewer.ui.components.common.ThemeSwitcher
 import com.example.jsonviewer.ui.components.navigation.NavigationBreadcrumb
-import com.example.jsonviewer.ui.components.raw.RawJsonView
+import com.example.jsonviewer.ui.components.raw.EditableRawJsonView
 import com.example.jsonviewer.ui.components.state.EmptyStateView
-import com.example.jsonviewer.ui.components.viewer.JsonItemsList
+import com.example.jsonviewer.ui.components.viewer.EditableJsonItemsList
 
 /**
- * Main screen component for the JSON viewer
+ * Enhanced main screen component for the JSON viewer with editing capabilities
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,19 +43,27 @@ fun JsonViewerScreen(
     rawJson: String,
     isViewingRawJson: Boolean,
     isPrettified: Boolean = true,
+    isEditingRawJson: Boolean = false,
+    isCurrentArrayParent: Boolean = false,
     onNavigateBack: () -> Boolean,
     onItemClick: (JsonNavigationItem) -> Unit,
     onToggleRawView: () -> Unit,
     onToggleJsonFormat: () -> Unit = {},
-    onLoadNewJson: () -> Unit
+    onToggleRawEditing: () -> Unit = {},
+    onSaveRawJsonChanges: (String) -> Unit = {},
+    onEditItem: (JsonNavigationItem, String, Any?) -> Unit = { _, _, _ -> },
+    onAddItem: (String, Any?) -> Unit = { _, _ -> },
+    onDeleteItem: (JsonNavigationItem) -> Unit = {},
+    onLoadNewJson: () -> Unit,
+    onToggleTheme: () -> Unit
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = if (isViewingRawJson) "Raw JSON"
-                        else if (path.isEmpty()) "JSON Viewer"
+                        text = if (isViewingRawJson) stringResource(R.string.raw_json)
+                        else if (path.isEmpty()) stringResource(R.string.app_name)
                         else path.last(),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -60,35 +72,65 @@ fun JsonViewerScreen(
                 navigationIcon = {
                     IconButton(onClick = { onNavigateBack() }) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Navigate Back"
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
                 actions = {
-                    // Action to toggle between raw view and structured view
-                    IconButton(onClick = { onToggleRawView() }) {
-                        Icon(
-                            imageVector = if (isViewingRawJson) Icons.Default.ViewList else Icons.Default.Code,
-                            contentDescription = if (isViewingRawJson) "Structured View" else "Raw JSON View"
-                        )
-                    }
-
-                    // Format toggle button (only show in raw view)
+                    // Raw JSON actions
                     if (isViewingRawJson) {
-                        IconButton(onClick = { onToggleJsonFormat() }) {
+                        // Edit/Save toggle for raw JSON
+                        IconButton(onClick = {
+                            if (isEditingRawJson) {
+                                // Do nothing on click, save button is separate
+                            } else {
+                                onToggleRawEditing()
+                            }
+                        }) {
                             Icon(
-                                imageVector = Icons.Outlined.Share,
-                                contentDescription = if (isPrettified) "Minify JSON" else "Prettify JSON"
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = stringResource(R.string.edit_json),
+                                tint = if (isEditingRawJson)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+
+                        // Format toggle button (only when not editing)
+                        if (!isEditingRawJson) {
+                            IconButton(onClick = { onToggleJsonFormat() }) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Share,
+                                    contentDescription = if (isPrettified)
+                                        stringResource(R.string.minify)
+                                    else
+                                        stringResource(R.string.prettify)
+                                )
+                            }
+                        }
+                    } else {
+                        // Toggle to raw view
+                        IconButton(onClick = { onToggleRawView() }) {
+                            Icon(
+                                imageVector = Icons.Default.Code,
+                                contentDescription = stringResource(R.string.raw_json)
                             )
                         }
                     }
+
+                    // Theme toggle button
+                    ThemeSwitcher(
+                        isDarkTheme = MaterialTheme.colorScheme.surface.luminance() < 0.5f,
+                        onToggleTheme = onToggleTheme
+                    )
 
                     // Home button to return to JSON input
                     IconButton(onClick = { onLoadNewJson() }) {
                         Icon(
                             imageVector = Icons.Default.Home,
-                            contentDescription = "Load New JSON"
+                            contentDescription = stringResource(R.string.load_new)
                         )
                     }
                 },
@@ -99,6 +141,7 @@ fun JsonViewerScreen(
             )
         },
         floatingActionButton = {
+            // Only show the floating button for structured view to Raw view toggle
             if (!isViewingRawJson && items.isNotEmpty()) {
                 FloatingActionButton(
                     onClick = { onToggleRawView() },
@@ -106,7 +149,7 @@ fun JsonViewerScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Code,
-                        contentDescription = "View Raw JSON",
+                        contentDescription = stringResource(R.string.view_raw_json),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
@@ -119,19 +162,22 @@ fun JsonViewerScreen(
                 .padding(paddingValues)
         ) {
             if (isViewingRawJson) {
-                // Raw JSON view
-                RawJsonView(
+                // Editable raw JSON view
+                EditableRawJsonView(
                     json = rawJson,
                     isPrettified = isPrettified,
-                    onToggleFormat = onToggleJsonFormat
+                    isEditing = isEditingRawJson,
+                    onToggleFormat = onToggleJsonFormat,
+                    onToggleEdit = onToggleRawEditing,
+                    onSaveChanges = onSaveRawJsonChanges
                 )
             } else {
-                // Structured JSON view
+                // Structured JSON view with editing capabilities
                 if (items.isEmpty()) {
                     EmptyStateView(
-                        title = "No Items to Display",
-                        message = "This JSON element contains no items to display or represents a primitive value.",
-                        actionText = "View Raw JSON",
+                        title = stringResource(R.string.no_items),
+                        message = stringResource(R.string.no_items_message),
+                        actionText = stringResource(R.string.view_raw_json),
                         onAction = { onToggleRawView() }
                     )
                 } else {
@@ -150,9 +196,14 @@ fun JsonViewerScreen(
                             )
                         }
 
-                        JsonItemsList(
+                        // Editable JSON items list
+                        EditableJsonItemsList(
                             items = items,
-                            onItemClick = onItemClick
+                            isArrayParent = isCurrentArrayParent,
+                            onItemClick = onItemClick,
+                            onEditItem = onEditItem,
+                            onAddItem = onAddItem,
+                            onDeleteItem = onDeleteItem
                         )
                     }
                 }

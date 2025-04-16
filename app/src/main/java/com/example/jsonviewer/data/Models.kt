@@ -24,15 +24,15 @@ data class NotFoundItem(
 /**
  * Generic class to represent any JSON object for flexible parsing
  */
-data class JsonNode(
-    val value: Any? = null,
-    val children: Map<String, JsonNode> = emptyMap(),
-    val arrayItems: List<JsonNode> = emptyList()
-) {
-    fun isObject(): Boolean = children.isNotEmpty()
-    fun isArray(): Boolean = arrayItems.isNotEmpty()
-    fun isPrimitive(): Boolean = !isObject() && !isArray()
-}
+//data class JsonNode(
+//    val value: Any? = null,
+//    val children: Map<String, JsonNode> = emptyMap(),
+//    val arrayItems: List<JsonNode> = emptyList()
+//) {
+//    private fun isObject(): Boolean = children.isNotEmpty()
+//    private fun isArray(): Boolean = arrayItems.isNotEmpty()
+//    fun isPrimitive(): Boolean = !isObject() && !isArray()
+//}
 
 /**
  * Utility class for JSON navigation
